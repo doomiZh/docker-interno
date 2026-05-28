@@ -1,0 +1,93 @@
+services:
+  # 1. Servicio n8n
+  n8n:
+    build:
+      context: ./n8n
+      dockerfile: Dockerfile
+    image: n8n-docker:local
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    group_add:
+      - "0"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:?N8N_BASIC_AUTH_USER requerido}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:?N8N_BASIC_AUTH_PASSWORD requerido}
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+      - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
+      - GENERIC_TIMEZONE=${TIMEZONE:-Europe/Madrid}
+      - TZ=${TIMEZONE:-Europe/Madrid}
+      - N8N_SECURE_COOKIE=false
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=72
+      - N8N_LOG_LEVEL=${N8N_LOG_LEVEL:-info}
+      - N8N_RESTRICT_FILE_ACCESS_TO=/home/node/generated
+      - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
+      - NODE_FUNCTION_ALLOW_BUILTIN=child_process
+      - NODE_FUNCTION_ALLOW_EXTERNAL=*
+      - NODES_EXCLUDE="[]"
+      - N8N_RUNNERS_HEARTBEAT_INTERVAL=300
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./generated:/home/node/generated
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - internal_bridge
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+
+  # 2. Servicio de ngrok (tunel)
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    restart: unless-stopped
+    command: http --url=fantasy-glancing-repossess.ngrok-free.dev n8n:5678
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    networks:
+      - internal_bridge
+    depends_on:
+      n8n:
+        condition: service_healthy
+
+  # 3. Servicio OpenHands
+  openhands:
+    image: ghcr.io/all-hands-ai/openhands:latest
+    container_name: openhands
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      - SANDBOX_RUNTIME_CONTAINER_IMAGE=ghcr.io/all-hands-ai/runtime:0.39-nikolaik
+      - SANDBOX_USER_ID=${OPENHANDS_UID:-1000}
+      - WORKSPACE_MOUNT_PATH=/opt/workspace
+      - LOG_ALL_EVENTS=${OPENHANDS_LOG_EVENTS:-false}
+      - OPENHANDS_LOG_LEVEL=${OPENHANDS_LOG_LEVEL:-info}
+      - OPENHANDS_CONFIG_DIR=/opt/workspace/.openhands
+    volumes:
+      - ./openhands_data:/.openhands
+      - openhands_workspace:/opt/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - internal_bridge
+    depends_on:
+      n8n:
+        condition: service_healthy
+
+networks:
+  internal_bridge:
+    driver: bridge
+
+volumes:
+  n8n_data:
+    driver: local
+  openhands_workspace:
+    driver: local

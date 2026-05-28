@@ -1,0 +1,12 @@
+.env
+data/
+*.logs
+logs/
+.DS_store
+Thumbs.db
+*.swp
+*.swo
+*credentials*.json
+openhands_data/
+generated/
+n8n_data

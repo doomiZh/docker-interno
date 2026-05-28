@@ -1,5 +1,7 @@
 # Docker Interno
 
+![Logo] (capturas/logo-docker-interno.png)
+
 Bot de Telegram con IA que genera y despliega entornos Docker automáticamente a partir de descripciones en lenguaje natural.
 
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
@@ -204,6 +206,7 @@ Los comandos `/listar`, `/detener` y `/eliminar` solo actúan sobre contenedores
 
 ### Pruebas de entornos web
 ![Wordpress](capturas/prueba01.png)
+
 ![Nginx](capturas/prueba02.png)
 
 ---

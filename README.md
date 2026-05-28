@@ -1,7 +1,5 @@
 # Docker Interno
 
-(capturas/logo-docker-interno.png)
-
 Bot de Telegram con IA que genera y despliega entornos Docker automáticamente a partir de descripciones en lenguaje natural.
 
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
